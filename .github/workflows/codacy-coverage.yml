@@ -3,16 +3,30 @@ on:
   push:
     branches: ["main"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --prefer-offline
+        continue-on-error: true
+
+      - name: Run frontend tests with coverage
+        run: yarn jest --coverage --passWithNoTests
+        continue-on-error: true
+
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@v1
+        if: always()
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: ""
-        continue-on-error: true
+          coverage-reports: .artifacts/coverage/cobertura-coverage.xml
