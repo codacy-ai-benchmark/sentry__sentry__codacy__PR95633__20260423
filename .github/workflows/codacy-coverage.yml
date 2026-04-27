@@ -14,19 +14,21 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --prefer-offline
-        continue-on-error: true
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run frontend tests with coverage
-        run: ./node_modules/.bin/jest --coverage --passWithNoTests
+        run: pnpm exec jest --coverage --coverageReporters=cobertura --coverageDirectory=.artifacts/coverage --passWithNoTests
         continue-on-error: true
 
       - name: Upload coverage to Codacy
         uses: codacy/codacy-coverage-reporter-action@v1
-        if: always()
+        if: ${{ hashFiles('.artifacts/coverage/cobertura-coverage.xml') != '' }}
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: .artifacts/coverage/cobertura-coverage.xml
